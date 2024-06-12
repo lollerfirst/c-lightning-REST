@@ -68,6 +68,10 @@ var wsServer = require('../utils/webSocketServer');
 *         name: description
 *         description: Only required for bolt11 invoices which do not contain a description themselves, but contain a description hash
 *         type: string
+        - in: body
+          name: partial_msat
+          description: Explicitly state that you are only paying some part of the invoice. Presumably someone else is paying the rest (otherwise the payment will time out at the recipient). Note that this is currently not supported for self-payment (please file an issue if you need this)
+          type: integer
 *     security:
 *       - MacaroonAuth: []
 *     responses:
@@ -146,6 +150,7 @@ exports.payInvoice = (req,res) => {
     var xcld = (req.body.exclude) ? req.body.exclude : null;
     var mxf = (req.body.maxfee) ? req.body.maxfee : null;
     var dscrptn = (req.body.description) ? req.body.description : null;
+    var part_msat = (req.body.partial_msat) ? req.body.partial_msat : null;
 
     //Call the pay command
     ln.pay(bolt11=invoice,
@@ -159,7 +164,8 @@ exports.payInvoice = (req,res) => {
         localinvreqid=lclnvrqd,
         exclude=xcld,
         maxfee=mxf,
-        description=dscrptn).then(data => {
+        description=dscrptn,
+        partial_msat=part_msat).then(data => {
         global.logger.log('pay invoice success');
         res.status(201).json(data);
     }).catch(err => {
